@@ -1,13 +1,20 @@
 extends Node2D
 
 @onready var tile_map = $TileMap
+@onready var popup_menu = $PopupMenu
 
 var board_x = 12
 var board_y = 9
+#board: number: int, position: vector2, building: bool, company:int 
+var board = {}
 var color = 4
-enum layers {white = 3, yellow, gray, green, blue, orange, purple, red, pink}
+enum layers {white = 3, yellow, gray, green, blue, orange, purple, red, pink, black = 0}
 var building_positions = {}
 var player_tile_pos = {0: Vector2(6,11), 1: Vector2(7,11), 2: Vector2(8,11), 3: Vector2(9,11), 4: Vector2(10,11), 5: Vector2(11,11)}
+var selection = []
+var options = range(108)
+
+var build_tile = false
 #var atlas_source_num = 1
 #var hidden_alt_num = 1
 #var atlas_tile_coords = Vector2.ZERO
@@ -21,12 +28,16 @@ var player_tile_pos = {0: Vector2(6,11), 1: Vector2(7,11), 2: Vector2(8,11), 3: 
 func _ready():
 	setup_board()
 	print(building_positions)
-	print(layers)
+	#print(layers)
 	get_first_tiles()
+	
+	popup_menu.add_item("Build building here")
+	popup_menu.add_item("Cancel")
+	popup_menu.connect("id_pressed", menu_click)
+	
 #
-## Called every frame. 'delta' is the elapsed time since the previous frame.
-#func _process(delta):
-	#pass
+func _process(delta):
+	pass
 #
 #func get_tiles_to_use():
 	#var chosen_tile_chords = []
@@ -40,15 +51,16 @@ func _ready():
 	#return chosen_tile_chords
 
 func get_first_tiles():
-	var options = range(108)
 	options.shuffle()
-	var selection = []
+	
 	for i in range(6):
 		selection.push_back(options.pop_back())
+		#prints("sel",selection)
+		#prints("opt", options)
 	print(selection)
 	var loc = 0
 	for j in selection:
-		print(building_positions[j])
+		#print(building_positions[j])
 		place_selection_of_tiles(building_positions[j], player_tile_pos[loc])
 		show_posibilities(building_positions[j])
 		loc += 1
@@ -82,21 +94,46 @@ func show_posibilities(location: Vector2):
 #
 #func set_cell():
 	#pass
-#
 func _input(event):
+	click_on_tile()
+	
+func click_on_tile():
 	if Input.is_action_just_pressed("turn_tile"):
 		#var pos_clicked = Vector2(tile_map.local_to_map(event.position))
 		var pos_clicked = Vector2(tile_map.local_to_map(get_global_mouse_position()))
-		#pos_clicked.x -= 1
-		#pos_clicked.y -= 1 
-		print(pos_clicked)
-		#prints("click", event.position)
-		#prints("click", event.global_position)
-		prints("click", get_global_mouse_position() )
-		
-		tile_map.set_cell(0, pos_clicked, color, pos_clicked, 0)
-		if color < 10:
-			color += 1
-		else:
-			color = 4
+		if check_if_tile_is_in_selection(pos_clicked):
+			#print(pos_clicked)
+			#prints("click", get_global_mouse_position() )
+			popup_menu.popup(Rect2(get_global_mouse_position().x+64, get_global_mouse_position().y+64, popup_menu.size.x, popup_menu.size.y))
+			await popup_menu.id_pressed
+		if build_tile:
+			tile_map.set_cell(0, pos_clicked, layers.black, pos_clicked, 0)
+			build_tile = false
+			#remove tile and add new one
+			selection.erase(building_positions.find_key(pos_clicked))
+			print(selection)
+			selection.push_back(options.pop_back())
+			print(selection)
+			var loc = 0
+			for i in selection :
+				place_selection_of_tiles(building_positions[i], player_tile_pos[loc])
+				show_posibilities(building_positions[i])
+				loc +=1
+			
+		#if color < 10:
+			#color += 1
+		#else:
+			#color = 4
 	#
+func check_if_tile_is_in_selection(click_pos: Vector2) -> bool:
+	var pos_in_building_number = building_positions.find_key(click_pos)
+	if selection.find(pos_in_building_number) > -1:
+		return true
+	else:
+		return false
+
+
+func menu_click(id):
+	if id == 0:
+		build_tile = true
+		
