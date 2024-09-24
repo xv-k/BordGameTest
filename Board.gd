@@ -23,11 +23,15 @@ var build_tile = false
 func _ready():
 	setup_board()
 	
-	popup_menu.add_item("Build building here")
-	popup_menu.add_item("Cancel")
+	popup_menu.add_item("Build building here") # id = 0
+	popup_menu.add_item("Cancel") # id = 1
+	#connect method menu_click to the "id_pressed" signal 
 	popup_menu.connect("id_pressed", menu_click)
 	
-#
+func menu_click(id):
+	if id == 0:
+		build_tile = true
+		
 func _process(delta):
 	pass
 #
@@ -91,6 +95,7 @@ func click_on_tile():
 		if check_if_tile_is_in_selection(pos_clicked):
 			#if tile can be clicked -> show small menu to choose what to do
 			popup_menu.popup(Rect2(get_global_mouse_position().x+64, get_global_mouse_position().y+64, popup_menu.size.x, popup_menu.size.y))
+			#we await the signal result before we continue
 			await popup_menu.id_pressed #this sets the build tile boolean to true
 		#if you chose to build the tile in the menu
 		if build_tile:
@@ -114,7 +119,5 @@ func check_if_tile_is_in_selection(click_pos: Vector2) -> bool:
 		return false
 
 
-func menu_click(id):
-	if id == 0:
-		build_tile = true
+
 		
