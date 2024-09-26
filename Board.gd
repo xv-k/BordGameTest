@@ -6,7 +6,7 @@ extends Node2D
 var board_x = 12
 var board_y = 9
 #all the tiles (in order) on the board
-var board_array = {} #TODO #board: number: int, position: vector2, building: bool, company:int 
+var board_array = []
 #all the available tiles
 var all_tiles_array = range(108) #just numbers
 #selection of tiles the player holds
@@ -16,8 +16,18 @@ var player_tile_position = Vector2(6,11)
 #colors of the board
 enum layers {white = 3, yellow, gray, green, blue, orange, purple, red, pink, black = 0}
 
-
-
+class tile_object:
+	var tile_number: int
+	var tile_coords: Vector2
+	var is_tile_built: bool
+	
+	func _init(tn: int, tc: Vector2, ib: bool):
+		tile_number = tn
+		tile_coords = tc
+		is_tile_built = ib
+	
+	
+#used only for click action
 var build_tile = false
 
 func _ready():
@@ -32,7 +42,7 @@ func menu_click(id):
 	if id == 0:
 		build_tile = true
 		
-func _process(delta):
+func _process(_delta):
 	pass
 #
 		
@@ -44,24 +54,24 @@ func setup_board():
 	#print(all_tiles_array)
 	#print(player_tiles)
 	print_player_tiles(player_tile_position) #print the six tiles on screen
-	show_player_posibilities_on_board()
+	show_player_possibilities_on_board()
 	
 func fill_board_array():
 	var i = 0
 	for y in range(board_y):
 		for x in range(board_x):
-			var current_spot = Vector2(x, y)
-			board_array[i] = Vector2(x,y)
+			#board_array[i] = Vector2(x,y)
+			board_array.append(tile_object.new(i, Vector2(x,y), false)) 
 			i += 1
-
+	
 func print_board():
-	for i in board_array:
+	for tile in board_array:
 		#set_cell(layernumber,
 		#		  coords: where to place the tile,
 		#		  source_id: number of the tileset (= colors in our case)
 		#		  atlas_coords: coords of the tile in the tilemap (what tile to print on screen)
 		#		  alternative_tile: int = 0 (no alternatives at the moment)
-		tile_map.set_cell(0, board_array[i], 3, board_array[i])
+		tile_map.set_cell(0, tile.tile_coords, 3, tile.tile_coords)
 
 func shuffle_all_tiles():
 	all_tiles_array.shuffle()
@@ -72,20 +82,27 @@ func pick_player_tiles(amount):
 
 func remove_player_tile(tile_clicked:Vector2):
 	#convert the postition of the tile (vector2) in an number and remove that number from the player tiles
-	player_tiles.erase(board_array.find_key(tile_clicked))
+	#player_tiles.erase(board_array.find_key(tile_clicked))
+	#using the tile_object instead with a lambda (pfff) 
+	var tile = board_array.filter(func(to): return to.tile_coords == tile_clicked)
+	if tile.size() > 0:
+		player_tiles.erase(tile[0].tile_number)
+		
+	#TODO not happy with lambda: is too much of a hassle, getting an array of objects from the filter fucntion and
+	#checking if array is not empty before doing anything (pffff)
 	
-func print_player_tiles(position: Vector2):
+func print_player_tiles(pos: Vector2):
 	for i in player_tiles:
-		position.x += 1
-		tile_map.set_cell(0, position, 3, board_array[i], 0)
+		pos.x += 1
+		tile_map.set_cell(0, pos, 3, board_array[i].tile_coords, 0)
 
-func show_player_posibilities_on_board():
+func show_player_possibilities_on_board():
 	for i in player_tiles:
 		#we loop over the numbers in the player tiles, and those tiles on the board are shown in grey
-		tile_map.set_cell(0, board_array[i], layers.gray, board_array[i])
+		tile_map.set_cell(0, board_array[i].tile_coords, layers.gray, board_array[i].tile_coords)
 
 	
-func _input(event):
+func _input(_event):
 	click_on_tile()
 	
 func click_on_tile():
@@ -100,7 +117,6 @@ func click_on_tile():
 		#if you chose to build the tile in the menu
 		if build_tile:
 			#change color of the tile
-			print("color")
 			tile_map.set_cell(0, pos_clicked,layers.black, pos_clicked)
 			build_tile = false
 			#remove the tile from the player_tiles
@@ -108,16 +124,57 @@ func click_on_tile():
 			#pich a new tile, show the tiles and show the new posibilities
 			pick_player_tiles(1)
 			print_player_tiles(player_tile_position)
-			show_player_posibilities_on_board()
-			
-	#
+			show_player_possibilities_on_board()
+		prints(
+			"left", check_neighbours(pos_clicked)[0], 
+			"up", check_neighbours(pos_clicked)[1],
+			"right", check_neighbours(pos_clicked)[2], 
+			"down", check_neighbours(pos_clicked)[3])
+
+#used to check the click on the board
 func check_if_tile_is_in_selection(click_pos: Vector2) -> bool:
-	var pos_in_building_number = board_array.find_key(click_pos)
+	var pos_in_building_number = -1
+	#var pos_in_building_number = board_array.find_key(click_pos)
+	#using the tile_object instead with a lambda (pfff)
+	var tile = board_array.filter(func(to): return to.tile_coords == click_pos)
+	if tile.size() > 0:
+		pos_in_building_number = tile[0].tile_number
+	
 	if player_tiles.find(pos_in_building_number) > -1:
 		return true
 	else:
 		return false
 
-
+#retuns the number postion of the neightbours (clockwise from left)
+func check_neighbours(click_pos: Vector2) -> Array:
+	var result = [-1, -1, -1, -1]
+	#var tile_number = board_array.find_key(click_pos)
+	#using the tile_object instead with a lambda (pfff)
+	var tile = board_array.filter(func(to): return to.tile_coords == click_pos)
+	if tile.size() > 0:
+		var tile_number = tile[0].tile_number
+	
+		#left -> -1 but result must be larger than 0 otherwise return -1
+		if (tile_number - 1) >= 0:
+			result[0] = tile_number - 1
+		else:
+			result[0] = -1
+		#up -> -board_x but position must be larger than board_X
+		if (tile_number - board_x) and tile_number > board_x:
+			result[1] = tile_number - board_x
+		else:
+			result[1] = -1
+		#right -> + 1 but result must be lower than board size otherwise return -1 (=board edge)
+		if (tile_number + 1) < (board_array.size() - 1):
+			result[2] = tile_number + 1
+		else:
+			result[2] = -1
+		#down -> + board_x but pos must be lower than pos minus board_x
+		if (tile_number + board_x) and (tile_number + board_x) < (board_array.size() - 1):
+			result[3] = tile_number + board_x
+		else:
+			result[3] = -1
+		#left, up, right, down
+	return result
 
 		
