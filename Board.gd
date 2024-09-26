@@ -6,6 +6,8 @@ extends Node2D
 #TODO should be refactored (rewritten) with a board array with tile objects as a state variable
 #board array should be autoloaded
 
+signal first_neigbour_signal
+
 var board_x = 12
 var board_y = 9
 #all the tiles (in order) on the board
@@ -126,6 +128,7 @@ func click_on_tile():
 			#change color of the tile
 			tile_map.set_cell(0, pos_clicked,layers.black, pos_clicked)
 			set_tile_to_built(pos_clicked)
+			check_first_built_neighbour(pos_clicked)
 			build_tile = false
 			#remove the tile from the player_tiles
 			remove_player_tile(pos_clicked)
@@ -198,6 +201,35 @@ func check_neighbours(click_pos: Vector2) -> Array:
 		#left, up, right, down
 	return result
 
+func check_neighbours_from_number(pos: int) -> Array:
+	var result = [-1, -1, -1, -1]
+
+	var tile_number = pos
+
+	#left -> -1 but result must be larger than 0 otherwise return -1
+	if (tile_number - 1) >= 0:
+		result[0] = tile_number - 1
+	else:
+		result[0] = -1
+	#up -> -board_x but position must be larger than board_X
+	if (tile_number - board_x) and tile_number > board_x:
+		result[1] = tile_number - board_x
+	else:
+		result[1] = -1
+	#right -> + 1 but result must be lower than board size otherwise return -1 (=board edge)
+	if (tile_number + 1) < (board_array.size() - 1):
+		result[2] = tile_number + 1
+	else:
+		result[2] = -1
+	#down -> + board_x but pos must be lower than pos minus board_x
+	if (tile_number + board_x) and (tile_number + board_x) < (board_array.size() - 1):
+		result[3] = tile_number + board_x
+	else:
+		result[3] = -1
+		#left, up, right, down
+	return result
+	
+
 func check_if_position_is_built(click_pos: Vector2) -> bool:
 	var tile = board_array.filter(func(to): return to.tile_coords == click_pos)
 	if tile.size() > 0:
@@ -211,3 +243,34 @@ func check_if_number_is_built(tile_num: int) -> bool:
 		return tile[0].is_tile_built
 	else:
 		return false
+
+#works but only if your company is built when two! tiles are neughbouring
+#when they start out immidiatly with three, this doest work
+#TODO: ann "company" variable to tile object and do this check:
+ # -> if new tile has neighbour and tile is not yet part of a company 
+func check_first_built_neighbour(pos_clicked):
+	#if new building has one neighbour and that neighbour has no neighbours -> emit signal
+	var only_neighbour = -1
+	var neighbour_count = 0
+	#array with neighbour numbers
+	var neighbours = check_neighbours(pos_clicked)
+	#loop neighbour numbers
+	for i in neighbours:
+			if check_if_number_is_built(i):
+				#store neighbour
+				only_neighbour = i
+				#count neighbours
+				neighbour_count += 1
+	#if only one neighbour			
+	if neighbour_count == 1:
+		#check neighbour's neighbours
+		var neighboursneighbour_count = 0
+		var neighboursneighbours = check_neighbours_from_number(only_neighbour)
+		for j in neighboursneighbours:
+				if check_if_number_is_built(j):
+					neighboursneighbour_count += 1
+		if neighboursneighbour_count == 1:
+			emit_signal("first_neigbour_signal", choose_company())
+	
+func choose_company():
+	print("choose company")
