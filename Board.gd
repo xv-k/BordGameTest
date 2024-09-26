@@ -3,6 +3,9 @@ extends Node2D
 @onready var tile_map = $TileMap
 @onready var popup_menu = $PopupMenu
 
+#TODO should be refactored (rewritten) with a board array with tile objects as a state variable
+#board array should be autoloaded
+
 var board_x = 12
 var board_y = 9
 #all the tiles (in order) on the board
@@ -91,16 +94,20 @@ func remove_player_tile(tile_clicked:Vector2):
 	#TODO not happy with lambda: is too much of a hassle, getting an array of objects from the filter fucntion and
 	#checking if array is not empty before doing anything (pffff)
 	
-func print_player_tiles(pos: Vector2):
+func print_player_tiles(screen_pos: Vector2):
 	for i in player_tiles:
-		pos.x += 1
-		tile_map.set_cell(0, pos, 3, board_array[i].tile_coords, 0)
+		screen_pos.x += 1
+		tile_map.set_cell(0, screen_pos, 3, board_array[i].tile_coords, 0)
 
 func show_player_possibilities_on_board():
 	for i in player_tiles:
 		#we loop over the numbers in the player tiles, and those tiles on the board are shown in grey
 		tile_map.set_cell(0, board_array[i].tile_coords, layers.gray, board_array[i].tile_coords)
 
+func set_tile_to_built(tile_clicked: Vector2):
+	var tile = board_array.filter(func(to): return to.tile_coords == tile_clicked)
+	if tile.size() > 0:
+		tile[0].is_tile_built = true
 	
 func _input(_event):
 	click_on_tile()
@@ -118,6 +125,7 @@ func click_on_tile():
 		if build_tile:
 			#change color of the tile
 			tile_map.set_cell(0, pos_clicked,layers.black, pos_clicked)
+			set_tile_to_built(pos_clicked)
 			build_tile = false
 			#remove the tile from the player_tiles
 			remove_player_tile(pos_clicked)
@@ -125,11 +133,24 @@ func click_on_tile():
 			pick_player_tiles(1)
 			print_player_tiles(player_tile_position)
 			show_player_possibilities_on_board()
+		
+		#DEBUG: print neighbours
 		prints(
 			"left", check_neighbours(pos_clicked)[0], 
 			"up", check_neighbours(pos_clicked)[1],
 			"right", check_neighbours(pos_clicked)[2], 
 			"down", check_neighbours(pos_clicked)[3])
+		#DEBUG: print board array
+		#for tile: tile_object in board_array:
+			#prints(tile.tile_number, tile.tile_coords, tile.is_tile_built)
+		#DEBUG: check neigbours are built
+		prints(
+			check_if_number_is_built(check_neighbours(pos_clicked)[0]), 
+			check_if_number_is_built(check_neighbours(pos_clicked)[1]),
+			check_if_number_is_built(check_neighbours(pos_clicked)[2]), 
+			check_if_number_is_built(check_neighbours(pos_clicked)[3]))
+		
+		
 
 #used to check the click on the board
 func check_if_tile_is_in_selection(click_pos: Vector2) -> bool:
@@ -177,4 +198,16 @@ func check_neighbours(click_pos: Vector2) -> Array:
 		#left, up, right, down
 	return result
 
-		
+func check_if_position_is_built(click_pos: Vector2) -> bool:
+	var tile = board_array.filter(func(to): return to.tile_coords == click_pos)
+	if tile.size() > 0:
+		return tile[0].is_tile_built
+	else:
+		return false
+
+func check_if_number_is_built(tile_num: int) -> bool:
+	var tile = board_array.filter(func(to): return to.tile_number == tile_num)
+	if tile.size() > 0:
+		return tile[0].is_tile_built
+	else:
+		return false
