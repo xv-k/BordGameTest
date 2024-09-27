@@ -10,8 +10,6 @@ signal first_neigbour_signal
 
 var board_x = 12
 var board_y = 9
-#all the tiles (in order) on the board
-var board_array = []
 #all the available tiles
 var all_tiles_array = range(108) #just numbers
 #selection of tiles the player holds
@@ -21,17 +19,6 @@ var player_tile_position = Vector2(6,11)
 #colors of the board
 enum layers {white = 3, yellow, gray, green, blue, orange, purple, red, pink, black = 0}
 
-class tile_object:
-	var tile_number: int
-	var tile_coords: Vector2
-	var is_tile_built: bool
-	
-	func _init(tn: int, tc: Vector2, ib: bool):
-		tile_number = tn
-		tile_coords = tc
-		is_tile_built = ib
-	
-	
 #used only for click action
 var build_tile = false
 
@@ -52,7 +39,6 @@ func _process(_delta):
 #
 		
 func setup_board():
-	fill_board_array() #generate the list of numbers corresponding to the tiles position
 	print_board() #show the board on screen
 	shuffle_all_tiles() #shuffle the tiles
 	pick_player_tiles(6) #take six tiles at start
@@ -61,16 +47,16 @@ func setup_board():
 	print_player_tiles(player_tile_position) #print the six tiles on screen
 	show_player_possibilities_on_board()
 	
-func fill_board_array():
-	var i = 0
-	for y in range(board_y):
-		for x in range(board_x):
-			#board_array[i] = Vector2(x,y)
-			board_array.append(tile_object.new(i, Vector2(x,y), false)) 
-			i += 1
+#func fill_board_array():
+	#var i = 0
+	#for y in range(board_y):
+		#for x in range(board_x):
+			##board_array[i] = Vector2(x,y)
+			#board_array.append(tile_object.new(i, Vector2(x,y), false)) 
+			#i += 1
 	
 func print_board():
-	for tile in board_array:
+	for tile in GameData.board_array:
 		#set_cell(layernumber,
 		#		  coords: where to place the tile,
 		#		  source_id: number of the tileset (= colors in our case)
@@ -89,7 +75,7 @@ func remove_player_tile(tile_clicked:Vector2):
 	#convert the postition of the tile (vector2) in an number and remove that number from the player tiles
 	#player_tiles.erase(board_array.find_key(tile_clicked))
 	#using the tile_object instead with a lambda (pfff) 
-	var tile = board_array.filter(func(to): return to.tile_coords == tile_clicked)
+	var tile = GameData.board_array.filter(func(to): return to.tile_coords == tile_clicked)
 	if tile.size() > 0:
 		player_tiles.erase(tile[0].tile_number)
 		
@@ -99,15 +85,15 @@ func remove_player_tile(tile_clicked:Vector2):
 func print_player_tiles(screen_pos: Vector2):
 	for i in player_tiles:
 		screen_pos.x += 1
-		tile_map.set_cell(0, screen_pos, 3, board_array[i].tile_coords, 0)
+		tile_map.set_cell(0, screen_pos, 3, GameData.board_array[i].tile_coords, 0)
 
 func show_player_possibilities_on_board():
 	for i in player_tiles:
 		#we loop over the numbers in the player tiles, and those tiles on the board are shown in grey
-		tile_map.set_cell(0, board_array[i].tile_coords, layers.gray, board_array[i].tile_coords)
+		tile_map.set_cell(0, GameData.board_array[i].tile_coords, layers.gray, GameData.board_array[i].tile_coords)
 
 func set_tile_to_built(tile_clicked: Vector2):
-	var tile = board_array.filter(func(to): return to.tile_coords == tile_clicked)
+	var tile = GameData.board_array.filter(func(to): return to.tile_coords == tile_clicked)
 	if tile.size() > 0:
 		tile[0].is_tile_built = true
 	
@@ -160,7 +146,7 @@ func check_if_tile_is_in_selection(click_pos: Vector2) -> bool:
 	var pos_in_building_number = -1
 	#var pos_in_building_number = board_array.find_key(click_pos)
 	#using the tile_object instead with a lambda (pfff)
-	var tile = board_array.filter(func(to): return to.tile_coords == click_pos)
+	var tile = GameData.board_array.filter(func(to): return to.tile_coords == click_pos)
 	if tile.size() > 0:
 		pos_in_building_number = tile[0].tile_number
 	
@@ -174,7 +160,7 @@ func check_neighbours(click_pos: Vector2) -> Array:
 	var result = [-1, -1, -1, -1]
 	#var tile_number = board_array.find_key(click_pos)
 	#using the tile_object instead with a lambda (pfff)
-	var tile = board_array.filter(func(to): return to.tile_coords == click_pos)
+	var tile = GameData.board_array.filter(func(to): return to.tile_coords == click_pos)
 	if tile.size() > 0:
 		var tile_number = tile[0].tile_number
 	
@@ -189,12 +175,12 @@ func check_neighbours(click_pos: Vector2) -> Array:
 		else:
 			result[1] = -1
 		#right -> + 1 but result must be lower than board size otherwise return -1 (=board edge)
-		if (tile_number + 1) < (board_array.size() - 1):
+		if (tile_number + 1) < (GameData.board_array.size() - 1):
 			result[2] = tile_number + 1
 		else:
 			result[2] = -1
 		#down -> + board_x but pos must be lower than pos minus board_x
-		if (tile_number + board_x) and (tile_number + board_x) < (board_array.size() - 1):
+		if (tile_number + board_x) and (tile_number + board_x) < (GameData.board_array.size() - 1):
 			result[3] = tile_number + board_x
 		else:
 			result[3] = -1
@@ -217,12 +203,12 @@ func check_neighbours_from_number(pos: int) -> Array:
 	else:
 		result[1] = -1
 	#right -> + 1 but result must be lower than board size otherwise return -1 (=board edge)
-	if (tile_number + 1) < (board_array.size() - 1):
+	if (tile_number + 1) < (GameData.board_array.size() - 1):
 		result[2] = tile_number + 1
 	else:
 		result[2] = -1
 	#down -> + board_x but pos must be lower than pos minus board_x
-	if (tile_number + board_x) and (tile_number + board_x) < (board_array.size() - 1):
+	if (tile_number + board_x) and (tile_number + board_x) < (GameData.board_array.size() - 1):
 		result[3] = tile_number + board_x
 	else:
 		result[3] = -1
@@ -231,14 +217,14 @@ func check_neighbours_from_number(pos: int) -> Array:
 	
 
 func check_if_position_is_built(click_pos: Vector2) -> bool:
-	var tile = board_array.filter(func(to): return to.tile_coords == click_pos)
+	var tile = GameData.board_array.filter(func(to): return to.tile_coords == click_pos)
 	if tile.size() > 0:
 		return tile[0].is_tile_built
 	else:
 		return false
 
 func check_if_number_is_built(tile_num: int) -> bool:
-	var tile = board_array.filter(func(to): return to.tile_number == tile_num)
+	var tile = GameData.board_array.filter(func(to): return to.tile_number == tile_num)
 	if tile.size() > 0:
 		return tile[0].is_tile_built
 	else:
