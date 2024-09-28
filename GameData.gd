@@ -29,8 +29,10 @@ func fill_board_array():
 			i += 1
 			
 func get_tile_from_position(pos: Vector2) -> tile_object:
-	return board_array.filter(func(to): return to.tile_coords == pos)[0]
-
+	if pos.x >= 0 and pos.y >=0 :
+		return board_array.filter(func(to): return to.tile_coords == pos)[0]
+	return null
+	
 func get_tile_from_number(tile_num: int) -> tile_object:
 	if tile_num > 0:
 		return board_array.filter(func(to): return to.tile_number == tile_num)[0]

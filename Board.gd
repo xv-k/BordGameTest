@@ -18,9 +18,9 @@ var player_tile_position = Vector2(6,11)
 #colors of the board
 enum layers {white = 3, yellow, gray, green, blue, orange, purple, red, pink, black = 0}
 #all companies
-var companies = ["Company 1", "Company 2", "Company 3", "Company 4", "Company 5", "Company 6", "Company 7"]
+var companies = {0: "Company 1", 1: "Company 2", 2: "Company 3", 3: "Company 4", 4: "Company 5", 5: "Company 6", 6: "Company 7"}
 #available companies
-var available_companies = [] #set in setup
+var available_companies = {} #set in setup
 
 #used only for click action
 var build_tile = false
@@ -34,10 +34,8 @@ func _ready():
 	#connect method menu_click to the "id_pressed" signal 
 	popup_menu.connect("id_pressed", menu_click)
 	
-	var index = 0
-	for c in available_companies:
-		popup_menu_company.add_item(c,index)
-		index += 1
+	for key in available_companies:
+		popup_menu_company.add_item(available_companies[key],key)
 	
 	#button.connect("button_down", Callable(self, "_on_button_down"))
 	popup_menu_company.connect("id_pressed", company_selection)
@@ -52,8 +50,8 @@ func _process(_delta):
 #
 		
 func setup_board():
-	for c in companies:
-		available_companies.append(c)
+	for key in companies:
+		available_companies[key] = companies[key]
 	shuffle_all_tiles() #shuffle the tiles
 	pick_player_tiles(6) #take six tiles at start
 	print_player_tiles(player_tile_position) #print the six tiles on screen
@@ -267,12 +265,10 @@ func choose_company(pos1:Vector2, pos2:Vector2):
 	print_board()
 	
 func company_selection(id):
-	company_select = (id + 1)
-	available_companies.pop_at(id)
+	company_select = (id)
+	available_companies.erase(id)
 	#popup_menu_company.remove_item(id) #is not working because indexes shift after removing
 	popup_menu_company.clear()
-	var index = 0
-	for c in available_companies:
-		popup_menu_company.add_item(c,index)
-		index += 1
+	for key in available_companies:
+		popup_menu_company.add_item(available_companies[key],key)
 
