@@ -29,6 +29,7 @@ var company_select = 0
 func _ready():
 	setup_board()
 	
+	#TODO: change popup menus to real UI menus
 	popup_menu.add_item("Build building here") # id = 0
 	popup_menu.add_item("Cancel") # id = 1
 	#connect method menu_click to the "id_pressed" signal 
@@ -40,7 +41,8 @@ func _ready():
 	#button.connect("button_down", Callable(self, "_on_button_down"))
 	popup_menu_company.connect("id_pressed", company_selection)
 	
-		
+
+#to check if we can click on the tile
 func menu_click(id):
 	if id == 0:
 		build_tile = true
@@ -66,7 +68,7 @@ func setup_board():
 			#i += 1
 	
 func print_board():
-	for tile: GameData.tile_object	 in GameData.board_array:
+	for tile: GameData.tile_object in GameData.board_array:
 		#set_cell(layernumber,
 		#		  coords: where to place the tile,
 		#		  source_id: number of the tileset (= colors in our case)
@@ -149,22 +151,23 @@ func click_on_tile():
 			pick_player_tiles(1)
 			print_player_tiles(player_tile_position)
 			print_board()
-		
+		#DEBUG: print neighbours
+		print(pos_clicked)
 		#DEBUG: print neighbours
 		prints(
-			"left", check_neighbours(pos_clicked)[0], 
-			"up", check_neighbours(pos_clicked)[1],
-			"right", check_neighbours(pos_clicked)[2], 
-			"down", check_neighbours(pos_clicked)[3])
+			"left", GameData.check_neighbours(pos_clicked)[0], 
+			"up", GameData.check_neighbours(pos_clicked)[1],
+			"right", GameData.check_neighbours(pos_clicked)[2], 
+			"down", GameData.check_neighbours(pos_clicked)[3])
 		#DEBUG: print board array
-		#for tile: tile_object in board_array:
-			#prints(tile.tile_number, tile.tile_coords, tile.is_tile_built)
+		for tile: GameData.tile_object in GameData.board_array:
+			prints(tile.tile_number, tile.tile_coords, tile.is_tile_built, tile.neighbours)
 		#DEBUG: check neigbours are built
 		prints(
-			GameData.check_if_number_is_built(check_neighbours(pos_clicked)[0]), 
-			GameData.check_if_number_is_built(check_neighbours(pos_clicked)[1]),
-			GameData.check_if_number_is_built(check_neighbours(pos_clicked)[2]), 
-			GameData.check_if_number_is_built(check_neighbours(pos_clicked)[3]))
+			GameData.check_if_number_is_built(GameData.check_neighbours(pos_clicked)[0]), 
+			GameData.check_if_number_is_built(GameData.check_neighbours(pos_clicked)[1]),
+			GameData.check_if_number_is_built(GameData.check_neighbours(pos_clicked)[2]), 
+			GameData.check_if_number_is_built(GameData.check_neighbours(pos_clicked)[3]))
 		
 		
 
@@ -178,69 +181,13 @@ func check_if_tile_is_in_selection(click_pos: Vector2) -> bool:
 	else:
 		return false
 
-#retuns the number postion of the neightbours (clockwise from left)
-func check_neighbours(click_pos: Vector2) -> Array:
-	var result = [-1, -1, -1, -1]
-	var tile_number = GameData.get_number_from_position(click_pos)
-
-	#left -> -1 but result must be larger than 0 otherwise return -1
-	if (tile_number - 1) >= 0:
-		result[0] = tile_number - 1
-	else:
-		result[0] = -1
-	#up -> -board_x but position must be larger than board_X
-	if (tile_number - board_x) and tile_number > board_x:
-		result[1] = tile_number - board_x
-	else:
-		result[1] = -1
-	#right -> + 1 but result must be lower than board size otherwise return -1 (=board edge)
-	if (tile_number + 1) < (GameData.board_array.size() - 1):
-		result[2] = tile_number + 1
-	else:
-		result[2] = -1
-	#down -> + board_x but pos must be lower than pos minus board_x
-	if (tile_number + board_x) and (tile_number + board_x) < (GameData.board_array.size() - 1):
-		result[3] = tile_number + board_x
-	else:
-		result[3] = -1
-		#left, up, right, down
-	return result
-	
-#TODO: the check if a tile is next to another is not good (it wraps around and it should not)
-func check_neighbours_from_number(pos: int) -> Array:
-	var result = [-1, -1, -1, -1]
-
-	var tile_number = pos
-
-	#left -> -1 but result must be larger than 0 otherwise return -1
-	if (tile_number - 1) >= 0:
-		result[0] = tile_number - 1
-	else:
-		result[0] = -1
-	#up -> -board_x but position must be larger than board_X
-	if (tile_number - board_x) and tile_number > board_x:
-		result[1] = tile_number - board_x
-	else:
-		result[1] = -1
-	#right -> + 1 but result must be lower than board size otherwise return -1 (=board edge)
-	if (tile_number + 1) < (GameData.board_array.size() - 1):
-		result[2] = tile_number + 1
-	else:
-		result[2] = -1
-	#down -> + board_x but pos must be lower than pos minus board_x
-	if (tile_number + board_x) and (tile_number + board_x) < (GameData.board_array.size() - 1):
-		result[3] = tile_number + board_x
-	else:
-		result[3] = -1
-		#left, up, right, down
-	return result
 
 func check_first_built_neighbour(pos_clicked):
 	#if new building has one neighbour and that neighbour has no neighbours -> emit signal
 	var only_neighbour = -1
 	var neighbour_count = 0
 	#array with neighbour numbers
-	var neighbours = check_neighbours(pos_clicked)
+	var neighbours = GameData.check_neighbours(pos_clicked)
 	#loop neighbour numbers
 	for i in neighbours:
 			if GameData.check_if_number_is_built(i):
@@ -269,6 +216,9 @@ func company_selection(id):
 	available_companies.erase(id)
 
 	popup_menu_company.clear()
-	for key in available_companies:
-		popup_menu_company.add_item(available_companies[key],key)
+	if not available_companies.is_empty():
+		for key in available_companies:
+			popup_menu_company.add_item(available_companies[key],key)
+	else: 
+		popup_menu_company.add_item("no more companies",-1)
 

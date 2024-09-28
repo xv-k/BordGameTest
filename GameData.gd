@@ -1,16 +1,22 @@
 extends Node
 
+#temporaraly
+var board_x = 12
+var board_y = 9
+
 class tile_object:
 	var tile_number: int
 	var tile_coords: Vector2
 	var is_tile_built: bool
 	var company: int
+	var neighbours : Array
 	
 	func _init(tn: int, tc: Vector2, itb: bool):
 		tile_number = tn
 		tile_coords = tc
 		is_tile_built = itb
 		company = 0
+		neighbours = []
 	
 #all the tiles (in order) on the board
 var board_array = []
@@ -18,7 +24,7 @@ var board_array = []
 # Called when the node enters the scene tree for the first time.
 func _ready():
 	fill_board_array() #generate the tiles
-
+	add_all_neighbours_to_array()
 
 func fill_board_array():
 	var i = 0
@@ -27,6 +33,7 @@ func fill_board_array():
 			#board_array[i] = Vector2(x,y)
 			board_array.append(tile_object.new(i, Vector2(x,y), false)) 
 			i += 1
+			
 			
 func get_tile_from_position(pos: Vector2) -> tile_object:
 	if pos.x >= 0 and pos.y >=0 :
@@ -64,3 +71,36 @@ func check_company_from_number(tile_num: int) -> int:
 	if tile_num > 0:
 		return get_tile_from_number(tile_num).company
 	return -1
+	
+func add_all_neighbours_to_array():
+	for tile: GameData.tile_object in GameData.board_array:
+		tile.neighbours = check_neighbours(tile.tile_coords)
+	
+#retuns the number postion of the neightbours (clockwise from left)
+func check_neighbours(click_pos: Vector2) -> Array:
+	var result = [-1, -1, -1, -1]
+	var tile_number = GameData.get_number_from_position(click_pos)
+
+	#left -> -1 but result must be larger than 0 otherwise return -1
+	# on row two 0 is 11 so must be larger than 11 ...
+	if (tile_number - (click_pos.y * board_x)) > 0:
+		result[0] = tile_number - 1
+	else:
+		result[0] = -1
+	#up -> -board_x but position must be larger than board_X
+	if (tile_number - board_x) and tile_number > board_x:
+		result[1] = tile_number - board_x
+	else:
+		result[1] = -1
+	#right -> + 1 but result must be lower than board size otherwise return -1 (=board edge)
+	if (tile_number - (click_pos.y * board_x)) < (board_x-1):
+		result[2] = tile_number + 1
+	else:
+		result[2] = -1
+	#down -> + board_x but pos must be lower than pos minus board_x
+	if (tile_number + board_x) and (tile_number + board_x) < (GameData.board_array.size() - 1):
+		result[3] = tile_number + board_x
+	else:
+		result[3] = -1
+		#left, up, right, down
+	return result

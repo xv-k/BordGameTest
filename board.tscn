@@ -1163,8 +1163,9 @@ layer_1/tile_data = PackedInt32Array()
 position = Vector2(736, 384)
 
 [node name="PopupMenu" type="PopupMenu" parent="."]
-size = Vector2i(100, 50)
+size = Vector2i(100, 25)
 
 [node name="PopupMenuCompany" type="PopupMenu" parent="."]
+size = Vector2i(100, 25)
 
 [connection signal="id_pressed" from="PopupMenuCompany" to="." method="_on_popup_menu_company_id_pressed"]
