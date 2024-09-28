@@ -15,10 +15,10 @@ var all_tiles_array = range(108) #just numbers
 var player_tiles = [] #just numbers
 #position to show player tiles on screen
 var player_tile_position = Vector2(6,11)
-#colors of the board
-enum layers {white = 3, yellow, gray, green, blue, orange, purple, red, pink, black = 0}
+#colors of the board (index corresdponding to the company)
+enum layers {black = 0, red, orange, yellow, green, blue, purple,  pink, white = 10, gray = 11}
 #all companies
-var companies = {0: "Company 1", 1: "Company 2", 2: "Company 3", 3: "Company 4", 4: "Company 5", 5: "Company 6", 6: "Company 7"}
+var companies = {1: "Company 1", 2: "Company 2", 3: "Company 3", 4: "Company 4", 5: "Company 5", 6: "Company 6", 7: "Company 7"}
 #available companies
 var available_companies = {} #set in setup
 
@@ -80,17 +80,17 @@ func print_board():
 				0:
 					tile_map.set_cell(0, tile.tile_coords, layers.black, tile.tile_coords)
 				1:
-					tile_map.set_cell(0, tile.tile_coords, layers.yellow, tile.tile_coords)
-				2:
-					tile_map.set_cell(0, tile.tile_coords, layers.green, tile.tile_coords)
-				3:
-					tile_map.set_cell(0, tile.tile_coords, layers.blue, tile.tile_coords)
-				4:
-					tile_map.set_cell(0, tile.tile_coords, layers.orange, tile.tile_coords)
-				5:
-					tile_map.set_cell(0, tile.tile_coords, layers.purple, tile.tile_coords)
-				6:
 					tile_map.set_cell(0, tile.tile_coords, layers.red, tile.tile_coords)
+				2:
+					tile_map.set_cell(0, tile.tile_coords, layers.orange, tile.tile_coords)
+				3:
+					tile_map.set_cell(0, tile.tile_coords, layers.yellow, tile.tile_coords)
+				4:
+					tile_map.set_cell(0, tile.tile_coords, layers.green, tile.tile_coords)
+				5:
+					tile_map.set_cell(0, tile.tile_coords, layers.blue, tile.tile_coords)
+				6:
+					tile_map.set_cell(0, tile.tile_coords, layers.purple, tile.tile_coords)
 				7:
 					tile_map.set_cell(0, tile.tile_coords, layers.pink, tile.tile_coords)
 					
@@ -114,7 +114,7 @@ func remove_player_tile(tile_clicked:Vector2):
 func print_player_tiles(screen_pos: Vector2):
 	for i in player_tiles:
 		screen_pos.x += 1
-		tile_map.set_cell(0, screen_pos, 3, GameData.board_array[i].tile_coords, 0)
+		tile_map.set_cell(0, screen_pos, layers.white, GameData.board_array[i].tile_coords, 0)
 
 func set_tile_to_built(tile_clicked: Vector2):
 	var tile = GameData.get_tile_from_position(tile_clicked)
@@ -267,7 +267,7 @@ func choose_company(pos1:Vector2, pos2:Vector2):
 func company_selection(id):
 	company_select = (id)
 	available_companies.erase(id)
-	#popup_menu_company.remove_item(id) #is not working because indexes shift after removing
+
 	popup_menu_company.clear()
 	for key in available_companies:
 		popup_menu_company.add_item(available_companies[key],key)
