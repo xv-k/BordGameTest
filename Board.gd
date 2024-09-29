@@ -143,7 +143,7 @@ func click_on_tile():
 			#change color of the tile
 			#tile_map.set_cell(0, pos_clicked,layers.black, pos_clicked)
 			set_tile_to_built(pos_clicked)
-			check_first_built_neighbour(pos_clicked)
+			check_what_to_build(pos_clicked)
 			build_tile = false
 			#remove the tile from the player_tiles
 			remove_player_tile(pos_clicked)
@@ -182,26 +182,26 @@ func check_if_tile_is_in_selection(click_pos: Vector2) -> bool:
 		return false
 
 
-func check_first_built_neighbour(pos_clicked):
-	#if new building has one neighbour and that neighbour has no neighbours -> emit signal
-	var only_neighbour = -1
-	var neighbour_count = 0
-	#array with neighbour numbers
-	var neighbours = GameData.check_neighbours(pos_clicked)
-	#loop neighbour numbers
-	for i in neighbours:
-			if GameData.check_if_number_is_built(i):
-				#store neighbour
-				only_neighbour = i
-				#count neighbours
-				neighbour_count += 1
-	#if only one neighbour
-	if neighbour_count == 1:
-		#check if neighbour has a company
-		if GameData.check_company_from_number(only_neighbour) == 0:
-			var neighbour_pos = GameData.get_position_from_number(only_neighbour)
-			#emit_signal("first_neigbour_signal", await choose_company(neighbour_pos, pos_clicked))
-			choose_company(neighbour_pos, pos_clicked)
+#func check_first_built_neighbour(pos_clicked):
+	##if new building has one neighbour and that neighbour has no neighbours -> emit signal
+	#var only_neighbour = -1
+	#var neighbour_count = 0
+	##array with neighbour numbers
+	#var neighbours = GameData.check_neighbours(pos_clicked)
+	##loop neighbour numbers
+	#for i in neighbours:
+			#if GameData.check_if_number_is_built(i):
+				##store neighbour
+				#only_neighbour = i
+				##count neighbours
+				#neighbour_count += 1
+	##if only one neighbour
+	#if neighbour_count == 1:
+		##check if neighbour has a company
+		#if GameData.check_company_from_number(only_neighbour) == 0:
+			#var neighbour_pos = GameData.get_position_from_number(only_neighbour)
+			##emit_signal("first_neigbour_signal", await choose_company(neighbour_pos, pos_clicked))
+			#choose_company(neighbour_pos, pos_clicked)
 	
 func choose_company(pos1:Vector2, pos2:Vector2):
 	print("choose company")
@@ -222,3 +222,32 @@ func company_selection(id):
 	else: 
 		popup_menu_company.add_item("no more companies",-1)
 
+func check_what_to_build(pos_clicked):
+	var selected_neighbour: GameData.tile_object
+	var neighbour_control_array = {}
+	
+	#check neighbours from board_array
+	var tile: GameData.tile_object  = GameData.get_tile_from_position(pos_clicked)
+	var neighbours = tile.neighbours #are numbers not positions
+		
+	#Fill neighbour array with E(empty) B(built) nummer(company)
+	for n in neighbours:
+		if n > -1:
+			if GameData.get_tile_from_number(n).is_tile_built:
+				if GameData.get_tile_from_number(n).company > 0:
+					neighbour_control_array[n] = "C"
+				else:
+					neighbour_control_array[n] = "B"
+			else:
+				neighbour_control_array[n] = "E"
+		else:
+			neighbour_control_array[n] = "X"
+	#mogelijkheden (enkel 1 B) -> bouwen
+	# twee B's bouwen
+	# drie B's bouwen
+	# 1 C --> kleur company
+	# 2 C's --> kleur company
+	if neighbour_control_array.values().count("B") == 1 and neighbour_control_array.values().count("C") == 0:
+		choose_company(GameData.get_tile_from_number(neighbour_control_array.find_key("B")).tile_coords, pos_clicked)
+	#if neighbour_control_array.values().count("B") == 2 and neighbour_control_array.values().count("C") == 0:
+	#	choose_company(GameData.get_tile_from_number(neighbour_control_array.find_key("B")).tile_coords, pos_clicked)

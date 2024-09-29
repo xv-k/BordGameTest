@@ -41,7 +41,7 @@ func get_tile_from_position(pos: Vector2) -> tile_object:
 	return null
 	
 func get_tile_from_number(tile_num: int) -> tile_object:
-	if tile_num > 0:
+	if tile_num >= 0:
 		return board_array.filter(func(to): return to.tile_number == tile_num)[0]
 	return null
 	
