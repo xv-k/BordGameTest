@@ -73,11 +73,18 @@ func check_company_from_position(pos: Vector2) -> int:
 func check_company_from_number(tile_num: int) -> int:
 	if tile_num > 0:
 		return get_tile_from_number(tile_num).company
-	return -1
+	return -1 #TODO: not good, retuns multiple times -1 if tile is against border so same company
 	
 func add_all_neighbours_to_array():
 	for tile: GameData.tile_object in GameData.board_array:
 		tile.neighbours = check_neighbours(tile.tile_coords)
+
+func count_all_companies_of_ont_type(id) -> int:
+	var company_count = 0
+	for tile: GameData.tile_object in GameData.board_array:
+		if tile.company == id:
+			company_count += 1
+	return company_count
 	
 #retuns the number postion of the neightbours (clockwise from left)
 #borders also get a number (had soome bugs with -1 for all borders)

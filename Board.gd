@@ -21,6 +21,8 @@ enum layers {black = 0, red, orange, yellow, green, blue, purple,  pink, white =
 var companies = {1: "Company 1", 2: "Company 2", 3: "Company 3", 4: "Company 4", 5: "Company 5", 6: "Company 6", 7: "Company 7"}
 #available companies
 var available_companies = {} #set in setup
+var built_comp_array = []
+var built_companies = {} #set every time a company is used
 
 #used only for click action
 var build_tile = false
@@ -176,36 +178,6 @@ func check_if_tile_is_in_selection(click_pos: Vector2) -> bool:
 	else:
 		return false
 
-
-#func check_first_built_neighbour(pos_clicked):
-	##if new building has one neighbour and that neighbour has no neighbours -> emit signal
-	#var only_neighbour = -1
-	#var neighbour_count = 0
-	##array with neighbour numbers
-	#var neighbours = GameData.check_neighbours(pos_clicked)
-	##loop neighbour numbers
-	#for i in neighbours:
-			#if GameData.check_if_number_is_built(i):
-				##store neighbour
-				#only_neighbour = i
-				##count neighbours
-				#neighbour_count += 1
-	##if only one neighbour
-	#if neighbour_count == 1:
-		##check if neighbour has a company
-		#if GameData.check_company_from_number(only_neighbour) == 0:
-			#var neighbour_pos = GameData.get_position_from_number(only_neighbour)
-			##emit_signal("first_neigbour_signal", await choose_company(neighbour_pos, pos_clicked))
-			#choose_company(neighbour_pos, pos_clicked)
-	
-func choose_company(pos1:Vector2, pos2:Vector2):
-	print("choose company")
-	popup_menu_company.popup(Rect2(get_global_mouse_position().x+64, get_global_mouse_position().y+64, popup_menu.size.x, popup_menu.size.y))
-	await popup_menu_company.id_pressed
-	set_tile_company(pos1, company_select)
-	set_tile_company(pos2, company_select)
-	
-
 func open_choose_company_menu():
 	#print("choose company")
 	popup_menu_company.popup(Rect2(get_global_mouse_position().x+64, get_global_mouse_position().y+64, popup_menu.size.x, popup_menu.size.y))
@@ -214,14 +186,22 @@ func open_choose_company_menu():
 	
 func company_selection(id):
 	company_select = id
-	available_companies.erase(id)
+	if company_select > 0:
+		available_companies.erase(id)
+		##add built companies to dict
+		##but to keep them sorted we add id to array, sort array and then add values to dict according to ids in array
+		#built_comp_array.append(id)
+		#built_comp_array.sort()
+		#built_companies.clear()
+		#for c_id in built_comp_array:
+			#built_companies[c_id] = companies[c_id]
 
-	popup_menu_company.clear()
-	if not available_companies.is_empty():
-		for key in available_companies:
-			popup_menu_company.add_item(available_companies[key],key)
-	else: 
-		popup_menu_company.add_item("no more companies",-1)
+		popup_menu_company.clear()
+		if not available_companies.is_empty():
+			for key in available_companies:
+				popup_menu_company.add_item(available_companies[key],key)
+		else: 
+			popup_menu_company.add_item("no more companies",-1)
 
 func check_what_to_build(pos_clicked):
 	var selected_neighbour: GameData.tile_object
@@ -260,9 +240,9 @@ func check_what_to_build(pos_clicked):
 		for n in neighbour_control_array:
 			if neighbour_control_array[n] == "C":
 				company_types.append(GameData.check_company_from_number(n))
-		#if only one company, add the tile to that company
-		if company_types.size() == 1:
-			set_tile_company(pos_clicked, company_types[0])
+		##if only one company, add the tile to that company
+		#if company_types.size() == 1:
+			#set_tile_company(pos_clicked, company_types[0])
 		#if more than one company, check if they are the same company
 		var equal = company_types.all(func(t): return t == company_types[0])
 		if equal:
@@ -273,7 +253,16 @@ func check_what_to_build(pos_clicked):
 				if neighbour_control_array[n] == "B":
 					set_tile_company(GameData.get_position_from_number(n), company_types[0])
 		else:
-			print("one company remains")
+			var company_size = []
+			for c in company_types :
+				company_size.append(GameData.count_all_companies_of_ont_type(c))
+			var equal_size = company_size.all(func(t): return t == company_size[0])
+			if equal_size:
+				one_company_remains()
+			else :
+				print(company_size.max())
+				var index = company_size.find(company_size.max())
+				set_tile_company(pos_clicked, company_types[index])
 
 	#if no built neighbours but one type of company
 	if neighbour_control_array.values().count("B") == 0 and neighbour_control_array.values().count("C") > 0:
@@ -281,17 +270,27 @@ func check_what_to_build(pos_clicked):
 		for n in neighbour_control_array:
 			if neighbour_control_array[n] == "C":
 				company_types.append(GameData.check_company_from_number(n))
-		#if only one company, add the tile to that company
-		if company_types.size() == 1:
-			set_tile_company(pos_clicked, company_types[0])
 		#if more than one company, check if they are the same company
-		if company_types.size() >= 1:
-			var equal = company_types.all(func(t): return t == company_types[0])
-			if equal:
-				set_tile_company(pos_clicked, company_types[0])
-			else:
-				print("one company remains")
-	#if neighbour_control_array.values().count("B") == 2 and neighbour_control_array.values().count("C") == 0:
-		#choose_company(GameData.get_tile_from_number(neighbour_control_array.find_key("B")).tile_coords, pos_clicked)
-	
-	#print_board()
+		var equal = company_types.all(func(t): return t == company_types[0])
+		if equal:
+			set_tile_company(pos_clicked, company_types[0])
+		else:
+			var company_size = []
+			for c in company_types :
+				company_size.append(GameData.count_all_companies_of_ont_type(c))
+			var equal_size = company_size.all(func(t): return t == company_size[0])
+			if equal_size:
+				one_company_remains()
+			else :
+				print(company_size.max())
+				var index_max = company_size.find(company_size.max())
+				var index_min = company_size.find(company_size.min())
+				for built_tile: GameData.tile_object in GameData.board_array:
+					if built_tile.company == company_types[index_min]:
+						built_tile.company = company_types[index_max]
+				set_tile_company(pos_clicked, company_types[index_max])
+				#set company beack in available company
+				available_companies[company_types[index_min]] = companies[company_types[index_min]]
+
+func one_company_remains():
+	print("one company remains")
