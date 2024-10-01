@@ -25,6 +25,9 @@ var board_array = []
 func _ready():
 	fill_board_array() #generate the tiles
 	add_all_neighbours_to_array()
+	#DEBUG: print board array
+	for tile: GameData.tile_object in GameData.board_array:
+		prints(tile.tile_number, tile.tile_coords, tile.is_tile_built, tile.neighbours)
 
 func fill_board_array():
 	var i = 0
@@ -77,8 +80,10 @@ func add_all_neighbours_to_array():
 		tile.neighbours = check_neighbours(tile.tile_coords)
 	
 #retuns the number postion of the neightbours (clockwise from left)
+#borders also get a number (had soome bugs with -1 for all borders)
+#lesft: -1, up: -2, right: -3, bottom: -4
 func check_neighbours(click_pos: Vector2) -> Array:
-	var result = [-1, -1, -1, -1]
+	var result = [-5, -5, -5, -5]
 	var tile_number = GameData.get_number_from_position(click_pos)
 
 	#left -> -1 but result must be larger than 0 otherwise return -1
@@ -91,16 +96,16 @@ func check_neighbours(click_pos: Vector2) -> Array:
 	if (tile_number - board_x) and tile_number > board_x:
 		result[1] = tile_number - board_x
 	else:
-		result[1] = -1
+		result[1] = -2
 	#right -> + 1 but result must be lower than board size otherwise return -1 (=board edge)
 	if (tile_number - (click_pos.y * board_x)) < (board_x-1):
 		result[2] = tile_number + 1
 	else:
-		result[2] = -1
+		result[2] = -3
 	#down -> + board_x but pos must be lower than pos minus board_x
 	if (tile_number + board_x) and (tile_number + board_x) < (GameData.board_array.size() - 1):
 		result[3] = tile_number + board_x
 	else:
-		result[3] = -1
+		result[3] = -4
 		#left, up, right, down
 	return result

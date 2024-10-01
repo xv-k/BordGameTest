@@ -47,9 +47,6 @@ func menu_click(id):
 	if id == 0:
 		build_tile = true
 		
-func _process(_delta):
-	pass
-#
 		
 func setup_board():
 	for key in companies:
@@ -143,7 +140,7 @@ func click_on_tile():
 			#change color of the tile
 			#tile_map.set_cell(0, pos_clicked,layers.black, pos_clicked)
 			set_tile_to_built(pos_clicked)
-			check_what_to_build(pos_clicked)
+			await check_what_to_build(pos_clicked)
 			build_tile = false
 			#remove the tile from the player_tiles
 			remove_player_tile(pos_clicked)
@@ -154,20 +151,18 @@ func click_on_tile():
 		#DEBUG: print neighbours
 		print(pos_clicked)
 		#DEBUG: print neighbours
-		prints(
-			"left", GameData.check_neighbours(pos_clicked)[0], 
-			"up", GameData.check_neighbours(pos_clicked)[1],
-			"right", GameData.check_neighbours(pos_clicked)[2], 
-			"down", GameData.check_neighbours(pos_clicked)[3])
-		#DEBUG: print board array
-		for tile: GameData.tile_object in GameData.board_array:
-			prints(tile.tile_number, tile.tile_coords, tile.is_tile_built, tile.neighbours)
+		#prints(
+			#"left", GameData.check_neighbours(pos_clicked)[0], 
+			#"up", GameData.check_neighbours(pos_clicked)[1],
+			#"right", GameData.check_neighbours(pos_clicked)[2], 
+			#"down", GameData.check_neighbours(pos_clicked)[3])
+		
 		#DEBUG: check neigbours are built
-		prints(
-			GameData.check_if_number_is_built(GameData.check_neighbours(pos_clicked)[0]), 
-			GameData.check_if_number_is_built(GameData.check_neighbours(pos_clicked)[1]),
-			GameData.check_if_number_is_built(GameData.check_neighbours(pos_clicked)[2]), 
-			GameData.check_if_number_is_built(GameData.check_neighbours(pos_clicked)[3]))
+		#prints(
+			#GameData.check_if_number_is_built(GameData.check_neighbours(pos_clicked)[0]), 
+			#GameData.check_if_number_is_built(GameData.check_neighbours(pos_clicked)[1]),
+			#GameData.check_if_number_is_built(GameData.check_neighbours(pos_clicked)[2]), 
+			#GameData.check_if_number_is_built(GameData.check_neighbours(pos_clicked)[3]))
 		
 		
 
@@ -209,10 +204,16 @@ func choose_company(pos1:Vector2, pos2:Vector2):
 	await popup_menu_company.id_pressed
 	set_tile_company(pos1, company_select)
 	set_tile_company(pos2, company_select)
+	
+
+func open_choose_company_menu():
+	#print("choose company")
+	popup_menu_company.popup(Rect2(get_global_mouse_position().x+64, get_global_mouse_position().y+64, popup_menu.size.x, popup_menu.size.y))
+	await popup_menu_company.id_pressed
 	print_board()
 	
 func company_selection(id):
-	company_select = (id)
+	company_select = id
 	available_companies.erase(id)
 
 	popup_menu_company.clear()
@@ -242,12 +243,55 @@ func check_what_to_build(pos_clicked):
 				neighbour_control_array[n] = "E"
 		else:
 			neighbour_control_array[n] = "X"
-	#mogelijkheden (enkel 1 B) -> bouwen
-	# twee B's bouwen
-	# drie B's bouwen
-	# 1 C --> kleur company
-	# 2 C's --> kleur company
-	if neighbour_control_array.values().count("B") == 1 and neighbour_control_array.values().count("C") == 0:
-		choose_company(GameData.get_tile_from_number(neighbour_control_array.find_key("B")).tile_coords, pos_clicked)
+	#DEBUG:
+	print(neighbour_control_array)
+	#mogelijkheden
+	#if one ore more buildings are neighbours but no companies
+	if neighbour_control_array.values().count("B") > 0 and neighbour_control_array.values().count("C") == 0:
+		await open_choose_company_menu()
+		for n in neighbour_control_array:
+			if neighbour_control_array[n] == "B":
+				set_tile_company(GameData.get_position_from_number(n), company_select)
+		set_tile_company(pos_clicked, company_select)
+	
+	#if one ore more buildings are neighbours but one type of company
+	if neighbour_control_array.values().count("B") > 0 and neighbour_control_array.values().count("C") > 0:
+		var company_types = []
+		for n in neighbour_control_array:
+			if neighbour_control_array[n] == "C":
+				company_types.append(GameData.check_company_from_number(n))
+		#if only one company, add the tile to that company
+		if company_types.size() == 1:
+			set_tile_company(pos_clicked, company_types[0])
+		#if more than one company, check if they are the same company
+		var equal = company_types.all(func(t): return t == company_types[0])
+		if equal:
+			#if companies are equal the company that is clicked becomes that company
+			set_tile_company(pos_clicked, company_types[0])
+			#and all other B neighbours also become taht company
+			for n in neighbour_control_array:
+				if neighbour_control_array[n] == "B":
+					set_tile_company(GameData.get_position_from_number(n), company_types[0])
+		else:
+			print("one company remains")
+
+	#if no built neighbours but one type of company
+	if neighbour_control_array.values().count("B") == 0 and neighbour_control_array.values().count("C") > 0:
+		var company_types = []
+		for n in neighbour_control_array:
+			if neighbour_control_array[n] == "C":
+				company_types.append(GameData.check_company_from_number(n))
+		#if only one company, add the tile to that company
+		if company_types.size() == 1:
+			set_tile_company(pos_clicked, company_types[0])
+		#if more than one company, check if they are the same company
+		if company_types.size() >= 1:
+			var equal = company_types.all(func(t): return t == company_types[0])
+			if equal:
+				set_tile_company(pos_clicked, company_types[0])
+			else:
+				print("one company remains")
 	#if neighbour_control_array.values().count("B") == 2 and neighbour_control_array.values().count("C") == 0:
-	#	choose_company(GameData.get_tile_from_number(neighbour_control_array.find_key("B")).tile_coords, pos_clicked)
+		#choose_company(GameData.get_tile_from_number(neighbour_control_array.find_key("B")).tile_coords, pos_clicked)
+	
+	#print_board()
