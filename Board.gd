@@ -265,8 +265,13 @@ func check_what_to_build(pos_clicked):
 				set_tile_company(pos_clicked, company_types[index])
 
 	#if no built neighbours but one type of company
-	if neighbour_control_array.values().count("B") == 0 and neighbour_control_array.values().count("C") > 0:
+	#if neighbour_control_array.values().count("B") == 0 and neighbour_control_array.values().count("C") > 0:
+	if neighbour_control_array.values().count("C") > 0:
 		var company_types = []
+		var index_max = 0
+		var index_min = 0
+		var company_size = []
+		
 		for n in neighbour_control_array:
 			if neighbour_control_array[n] == "C":
 				company_types.append(GameData.check_company_from_number(n))
@@ -275,7 +280,7 @@ func check_what_to_build(pos_clicked):
 		if equal:
 			set_tile_company(pos_clicked, company_types[0])
 		else:
-			var company_size = []
+			company_size = []
 			for c in company_types :
 				company_size.append(GameData.count_all_companies_of_ont_type(c))
 			var equal_size = company_size.all(func(t): return t == company_size[0])
@@ -283,14 +288,17 @@ func check_what_to_build(pos_clicked):
 				one_company_remains()
 			else :
 				print(company_size.max())
-				var index_max = company_size.find(company_size.max())
-				var index_min = company_size.find(company_size.min())
+				index_max = company_size.find(company_size.max())
+				index_min = company_size.find(company_size.min())
 				for built_tile: GameData.tile_object in GameData.board_array:
 					if built_tile.company == company_types[index_min]:
 						built_tile.company = company_types[index_max]
 				set_tile_company(pos_clicked, company_types[index_max])
 				#set company beack in available company
 				available_companies[company_types[index_min]] = companies[company_types[index_min]]
-
+		for n in neighbour_control_array:
+			if neighbour_control_array[n] == "B":
+				set_tile_company(GameData.get_position_from_number(n), company_types[index_max])
+					
 func one_company_remains():
 	print("one company remains")
